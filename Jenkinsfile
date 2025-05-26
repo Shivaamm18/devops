@@ -10,7 +10,7 @@ pipeline {
         stage('Clone Repo') {
             steps {
                 // Uses credentials configured in Jenkins if needed
-                git url: 'https://github.com/ArunSadalgekar07/devops.git', credentialsId: 'github-pat'
+                git branch: 'main', url: 'https://github.com/ArunSadalgekar07/devops.git'
             }
         }
 
