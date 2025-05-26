@@ -1,0 +1,251 @@
+ArunSadalgekar07: #codebase for my project I want to buld a CI/Cd pipeline uing docker, github , selenium and jenkins, aws ec2 instance. Give me proper step by step workflow to how to do that.
+
+GitHub Copilot: I'll help you create a CI/CD pipeline for your React chat application. Here's a detailed step-by-step workflow:
+
+### 1. Docker Setup (Already Done)
+You already have a Dockerfile in your project. Here's what it does:
+- Uses Node.js 20 Alpine as base image
+- Sets up working directory
+- Installs dependencies
+- Builds the React app
+- Serves it using a static server
+
+### 2. GitHub Repository Setup
+```markdown
+1. Create a new GitHub repository
+2. Initialize Git in your project:
+```
+````bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin <your-github-repo-url>
+git push -u origin main
+````
+
+### 3. Jenkins Setup on AWS EC2
+```markdown
+1. Launch EC2 Instance:
+   - Choose Ubuntu Server AMI
+   - t2.micro instance type (free tier)
+   - Configure security group:
+     - SSH (Port 22)
+     - HTTP (Port 80)
+     - Jenkins (Port 8080)
+     - Custom TCP (Port 3000)
+
+2. Install Jenkins:
+```
+````bash
+sudo apt update
+sudo apt install openjdk-11-jdk
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins
+sudo systemctl start jenkins
+````
+
+### 4. Create Jenkinsfile
+````groovy
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "your-dockerhub-username/chat-frontend"
+        DOCKER_TAG = "latest"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'npm run test'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
+                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sh "docker-compose down || true"
+                sh "docker-compose up -d"
+            }
+        }
+    }
+}
+````
+
+### 5. Create docker-compose.yml
+````yaml
+version: '3'
+services:
+  chat-frontend:
+    image: your-dockerhub-username/chat-frontend:latest
+    ports:
+      - "3000:3000"
+    restart: always
+````
+
+### 6. Setup Selenium Tests
+Create a new directory for Selenium tests:
+
+````python
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+def test_login_page():
+    driver = webdriver.Chrome()
+    driver.get("http://localhost:3000/login")
+    
+    # Test login form
+    username_input = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, "username"))
+    )
+    password_input = driver.find_element(By.NAME, "password")
+    
+    username_input.send_keys("testuser")
+    password_input.send_keys("testpass")
+    
+    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
+    login_button.click()
+    
+    # Add assertions here
+    
+    driver.quit()
+````
+
+### 7. Configure GitHub Actions (Alternative CI/CD)
+````yaml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest .
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push to DockerHub
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/chat-frontend:latest
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /app
+          docker-compose down
+          docker-compose pull
+          docker-compose up -d
+````
+
+### 8. Complete Pipeline Workflow:
+```markdown
+1. Developer pushes code to GitHub
+2. GitHub webhook triggers Jenkins pipeline
+3. Jenkins:
+   - Pulls latest code
+   - Installs dependencies
+   - Runs tests
+   - Builds Docker image
+   - Pushes to DockerHub
+   - Deploys to EC2
+
+4. On EC2:
+   - Docker pulls latest image
+   - Stops existing container
+   - Starts new container
+   - Application is live at EC2_PUBLIC_IP:3000
+
+5. Selenium tests run against deployed application
+```
+
+### 9. Additional Steps:
+```markdown
+1. Configure Jenkins GitHub webhook
+2. Set up DockerHub credentials in Jenkins
+3. Configure AWS credentials
+4. Set up environment variables
+5. Configure monitoring and logging
+6. Set up alerts for pipeline failures
+```
+
+### 10. Monitoring and Logging:
+```markdown
+1. Add logging services:
+   - ELK Stack or 
+   - CloudWatch
+
+2. Monitor:
+   - Application performance
+   - Server health
+   - Pipeline status
+   - Deployment success/failure
+```
+
+This setup provides a complete CI/CD pipeline with:
+- Automated testing
+- Containerization
+- Continuous deployment
+- End-to-end testing
+- Monitoring and logging
+
+Let me know if you need more specific details about any part of this workflow!
+
+Similar code found with 2 license types

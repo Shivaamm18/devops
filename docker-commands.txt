@@ -1,0 +1,15 @@
+$ docker build -t vite-frontend .
+
+
+$ docker run -p 3000:3000 vite-frontend 
+
+$ docker logs -f  chat-app
+
+
+
+-----for pushing it to the repo 
+1. create a repo in the docker hub 
+
+docker tag chat-app:latest chat-frontend:latest
+
+docker push arun12311/chat-frontend:tagname
