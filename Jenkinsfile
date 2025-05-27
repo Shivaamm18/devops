@@ -17,13 +17,10 @@ pipeline {
         stage('Deploy to EC2 and Build Docker') {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} 'rm -rf ${APP_DIR} && mkdir -p ${APP_DIR}'
-                    scp -o StrictHostKeyChecking=no -r * ec2-user@${REMOTE_HOST}:${APP_DIR}
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        cd ${APP_DIR} &&
-                        docker build -t ${APP_NAME} .
-                    '
+                    bat """
+                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "rm -rf %APP_DIR% && mkdir -p %APP_DIR%"
+                    powershell -Command "scp -o StrictHostKeyChecking=no -r * ec2-user@%REMOTE_HOST%:%APP_DIR%"
+                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "cd %APP_DIR% && docker build -t %APP_NAME% ."
                     """
                 }
             }
@@ -32,13 +29,10 @@ pipeline {
         stage('Run and Test with Selenium') {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker run --rm -d -p 3000:3000 --name chat-test ${APP_NAME}
-                    '
-                    sleep 15
-                    # Here, replace with your Selenium test command if available
-                    curl -s http://${REMOTE_HOST}:3000 | grep "<title>" || echo "Test failed"
+                    bat """
+                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "docker run --rm -d -p 3000:3000 --name chat-test %APP_NAME%"
+                    timeout /t 15
+                    curl -s http://%REMOTE_HOST%:3000 | findstr "<title>" || echo Test failed
                     """
                 }
             }
@@ -47,10 +41,8 @@ pipeline {
         stage('Cleanup') {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker stop \$(docker ps -q --filter name=chat-test)
-                    '
+                    bat """
+                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "docker stop $(docker ps -q --filter name=chat-test)"
                     """
                 }
             }
