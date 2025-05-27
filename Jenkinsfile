@@ -5,6 +5,7 @@ pipeline {
         REMOTE_HOST = "13.50.56.82"
         APP_DIR = "/home/ec2-user/app"
         APP_NAME = "vite-chat-app"
+        SSH_KEY = "C:\\Users\\aruns\\Downloads\\DOCKER.pem"
     }
 
     stages {
@@ -16,44 +17,15 @@ pipeline {
 
         stage('Deploy to EC2 and Build Docker') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} 'rm -rf ${APP_DIR} && mkdir -p ${APP_DIR}'
-                    scp -o StrictHostKeyChecking=no -r * ec2-user@${REMOTE_HOST}:${APP_DIR}
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        cd ${APP_DIR} &&
-                        docker build -t ${APP_NAME} .
-                    '
-                    """
-                }
+                powershell """
+                ssh -i "$env:SSH_KEY" -o StrictHostKeyChecking=no ec2-user@$env:REMOTE_HOST "rm -rf $env:APP_DIR && mkdir -p $env:APP_DIR"
+                scp -i "$env:SSH_KEY" -o StrictHostKeyChecking=no -r * ec2-user@$env:REMOTE_HOST:$env:APP_DIR
+                ssh -i "$env:SSH_KEY" -o StrictHostKeyChecking=no ec2-user@$env:REMOTE_HOST "cd $env:APP_DIR && docker build -t $env:APP_NAME ."
+                """
             }
         }
 
         stage('Run and Test with Selenium') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker run --rm -d -p 3000:3000 --name chat-test ${APP_NAME}
-                    '
-                    sleep 15
-                    # Here, replace with your Selenium test command if available
-                    curl -s http://${REMOTE_HOST}:3000 | grep "<title>" || echo "Test failed"
-                    """
-                }
-            }
-        }
-
-        stage('Cleanup') {
-            steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker stop \$(docker ps -q --filter name=chat-test)
-                    '
-                    """
-                }
-            }
-        }
-    }
-}
+                powershell """
+                ssh -i "$env:SSH_KEY" -o StrictHostKeyCheckin_
