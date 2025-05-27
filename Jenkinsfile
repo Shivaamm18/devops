@@ -16,8 +16,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh """
-                scp -o StrictHostKeyChecking=no -i ~/.ssh/your-key.pem -r . ec2-user@<EC2-IP>:/home/ec2-user/app
-                ssh -o StrictHostKeyChecking=no -i ~/.ssh/your-key.pem ec2-user@<EC2-IP> '
+                scp -o StrictHostKeyChecking=no -i /c/Users/aruns/Downloads/DOCKER.pem -r . ec2-user@13.50.56.82:/home/ec2-user/app
+                ssh -i /c/Users/aruns/Downloads/DOCKER.pem ec2-user@13.50.56.82 '
                   cd /home/ec2-user/app &&
                   docker build -t vite-chat-app .
                 '
@@ -40,7 +40,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 sh """
-                ssh -i ~/.ssh/your-key.pem ec2-user@<EC2-IP> '
+                ssh -i ~/.ssh/your-key.pem ec2-user@13.50.56.82 '
                   docker stop \$(docker ps -q --filter ancestor=vite-chat-app)
                 '
                 """
