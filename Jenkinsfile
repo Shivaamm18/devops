@@ -17,7 +17,7 @@ pipeline {
             steps {
                 sh """
                 scp -o StrictHostKeyChecking=no -i /c/Users/aruns/Downloads/DOCKER.pem -r . ec2-user@13.50.56.82:/home/ec2-user/app
-                ssh -i /c/Users/aruns/Downloads/DOCKER.pem ec2-user@13.50.56.82 '
+                ssh -i ~/c/Users/aruns/Downloads/DOCKER.pem ec2-user@13.50.56.82 '
                   cd /home/ec2-user/app &&
                   docker build -t vite-chat-app .
                 '
@@ -28,7 +28,7 @@ pipeline {
         stage('Run Selenium Tests') {
             steps {
                 sh """
-                ssh -i ~/.ssh/your-key.pem ec2-user@<EC2-IP> '
+                ssh -i ~/c/Users/aruns/Downloads/DOCKER.pem ec2-user@13.50.56.82 '
                   docker run --rm -p 3000:3000 -d vite-chat-app &&
                   sleep 10 &&
                   curl -s http://localhost:3000 | grep "<title>" || echo "Test failed"
@@ -40,7 +40,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 sh """
-                ssh -i ~/.ssh/your-key.pem ec2-user@13.50.56.82 '
+                ssh -i ~/c/Users/aruns/Downloads/DOCKER.pem ec2-user@13.50.56.82 '
                   docker stop \$(docker ps -q --filter ancestor=vite-chat-app)
                 '
                 """
