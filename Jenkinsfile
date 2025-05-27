@@ -42,7 +42,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['ec2-ssh-key']) {
                     bat """
-                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "docker stop $(docker ps -q --filter name=chat-test)"
+                    ssh -o StrictHostKeyChecking=no ec2-user@%REMOTE_HOST% "docker stop \\$(docker ps -q --filter name=chat-test)"
                     """
                 }
             }
