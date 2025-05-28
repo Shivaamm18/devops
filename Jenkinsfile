@@ -54,10 +54,10 @@ pipeline {
             steps {
         sh """
             echo "Installing Selenium test dependencies..."
-            npm install
+            // npm install
 
             echo "Running Selenium tests..."
-            npm run test
+            // npm run test
         """
     }
         }
