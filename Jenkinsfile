@@ -16,7 +16,7 @@ pipeline {
 
         stage('Deploy to EC2 and Build Docker') {
             steps {
-                sshagent(credentials: ['ec2-user']) {
+                sshagent(['aws-ec2-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} 'rm -rf ${APP_DIR} && mkdir -p ${APP_DIR}'
                     scp -o StrictHostKeyChecking=no -r * ec2-user@${REMOTE_HOST}:${APP_DIR}
@@ -31,7 +31,7 @@ pipeline {
 
         stage('Run and Test with Selenium') {
             steps {
-                sshagent(credentials: ['ec2-user']) {
+                sshagent(['aws-ec2-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
                         docker run --rm -d -p 3000:3000 --name chat-test ${APP_NAME}
@@ -46,7 +46,7 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                sshagent(credentials: ['ec2-user']) {
+                sshagent(['aws-ec2-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
                         docker stop \$(docker ps -q --filter name=chat-test)
