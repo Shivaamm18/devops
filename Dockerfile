@@ -17,7 +17,7 @@ COPY . .
 RUN echo "VITE_API_URL=https://chat-backend-daem.onrender.com" > .env
 
 # Build the app
-RUN npm run build
+RUN node --max-old-space-size=512 node_modules/vite/bin/vite.js build
 
 # Install serve to run the application
 RUN npm install -g serve
