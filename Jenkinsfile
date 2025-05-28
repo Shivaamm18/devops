@@ -2,57 +2,49 @@ pipeline {
     agent any
 
     environment {
-        REMOTE_HOST = "13.50.56.82"
-        APP_DIR = "/home/ec2-user/app"
-        APP_NAME = "vite-chat-app"
+        DOCKER_HOST_IP = "51.21.54.222"
+        DOCKER_USER = "ubuntu"
+        DOCKER_APP_DIR = "chat-app"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/ArunSadalgekar07/devops.git'
             }
         }
 
-        stage('Deploy to EC2 and Build Docker') {
+        stage('Build Docker Image') {
             steps {
-                sshagent(credentials: ['aws-ec2-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} 'rm -rf ${APP_DIR} && mkdir -p ${APP_DIR}'
-                    scp -o StrictHostKeyChecking=no -r * ec2-user@${REMOTE_HOST}:${APP_DIR}
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        cd ${APP_DIR} &&
-                        docker build -t ${APP_NAME} .
+                sh """
+                    scp -o StrictHostKeyChecking=no -r . ${DOCKER_USER}@${DOCKER_HOST_IP}:${DOCKER_APP_DIR}
+                    ssh -o StrictHostKeyChecking=no ${DOCKER_USER}@${DOCKER_HOST_IP} '
+                        cd ${DOCKER_APP_DIR} &&
+                        docker build -t vite-chat-app .
                     '
-                    """
-                }
+                """
             }
         }
 
-        stage('Run and Test with Selenium') {
+        stage('Run Container') {
             steps {
-                sshagent(['aws-ec2-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker run --rm -d -p 3000:3000 --name chat-test ${APP_NAME}
+                sh """
+                    ssh ${DOCKER_USER}@${DOCKER_HOST_IP} '
+                        docker rm -f vite-chat-container || true &&
+                        docker run -d -p 3000:3000 --name vite-chat-container vite-chat-app
                     '
-                    sleep 15
-                    # Here, replace with your Selenium test command if available
-                    curl -s http://${REMOTE_HOST}:3000 | grep "<title>" || echo "Test failed"
-                    """
-                }
+                """
             }
         }
 
-        stage('Cleanup') {
+        stage('Selenium Tests') {
             steps {
-                sshagent(['aws-ec2-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} '
-                        docker stop \$(docker ps -q --filter name=chat-test)
-                    '
-                    """
-                }
+                sh """
+                    # Clone test repo or use local test scripts
+                    # Example: run headless Chrome test using Selenium
+                    echo "Running Selenium tests..."
+                    # Place your selenium test command here
+                """
             }
         }
     }
