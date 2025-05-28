@@ -16,7 +16,7 @@ pipeline {
 
         stage('Deploy to EC2 and Build Docker') {
             steps {
-                sshagent(['aws-ec2-key']) {
+                sshagent(credentials: ['aws-ec2-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ec2-user@${REMOTE_HOST} 'rm -rf ${APP_DIR} && mkdir -p ${APP_DIR}'
                     scp -o StrictHostKeyChecking=no -r * ec2-user@${REMOTE_HOST}:${APP_DIR}
