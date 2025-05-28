@@ -52,11 +52,14 @@ pipeline {
 
         stage('Selenium Tests') {
             steps {
-                sh """
-                    echo "Running Selenium tests..."
-                    # TODO: Add your Selenium test command here
-                """
-            }
+        sh """
+            echo "Installing Selenium test dependencies..."
+            npm install
+
+            echo "Running Selenium tests..."
+            npm run test
+        """
+    }
         }
     }
 }
