@@ -200,7 +200,7 @@ const Login = () => {
                   variant="outlined"
                   onClick={toggleLogin}
                 >
-                  Sign Up Instead
+                  Sign Up Instead test random
                 </Button>
               </form>
             </>
