@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST_IP = "51.21.54.222"
+        DOCKER_HOST_IP = "13.61.96.77"
         DOCKER_USER = "ubuntu"
         DOCKER_APP_DIR = "chat-app"
     }
@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/ArunSadalgekar07/devops.git'
+                git branch: 'main', url: 'https://github.com/Shivaamm18/devops.git'
             }
         }
 
