@@ -318,7 +318,7 @@ const Login = () => {
                   fullWidth
                   disabled={isLoading}
                 >
-                  Sign Up Here Random again
+                  Sign Up Here 
                 </Button>
 
                 <Typography textAlign={"center"} m={".5rem"} color="textSecondary">
